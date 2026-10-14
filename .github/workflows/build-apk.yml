@@ -1,0 +1,48 @@
+name: Compilar APK Ativador
+
+on:
+  push:
+    branches: [ "**" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Gerar APK Android
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar arquivos do repositório
+        uses: actions/checkout@v4
+
+      - name: Descompactar projeto
+        run: |
+          ZIP_FILE=$(ls *.zip 2>/dev/null | head -n 1)
+          if [ -n "$ZIP_FILE" ]; then
+            echo "Descompactando $ZIP_FILE..."
+            unzip -o "$ZIP_FILE"
+            if [ -d "AtivadorBorgesCanais" ]; then
+              cp -r AtivadorBorgesCanais/* .
+            fi
+          fi
+          ls -la
+
+      - name: Configurar Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Configurar Gradle 8.7
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.7'
+
+      - name: Compilar APK
+        run: |
+          gradle assembleRelease --stacktrace
+
+      - name: Salvar APK Gerado para Download
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ativador-BORGES-CANAIS
+          path: app/build/outputs/apk/release/*.apk
+          retention-days: 30
